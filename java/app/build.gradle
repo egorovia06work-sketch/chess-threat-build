@@ -1,0 +1,68 @@
+/*
+ * Сборка Java-версии задачи 2.25 (сгенерировано `gradle init`, доработано).
+ */
+
+plugins {
+    // Плагин application: задачи run, installDist, distZip, startScripts.
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform(libs.junit.bom)
+    testImplementation libs.junit.jupiter
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Байт-код Java 17: запускается на любой JDK 17+.
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+application {
+    mainClass = 'chess.App'
+}
+
+// Исходники и вывод программы — в UTF-8.
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Исполняемый jar: java -jar app/build/libs/app.jar e1 e8 h4
+tasks.named('jar') {
+    manifest {
+        attributes('Main-Class': application.mainClass)
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging {
+        events 'skipped', 'failed'      // 'passed' — чтобы видеть каждый тест
+        exceptionFormat = 'full'
+    }
+    // Итог по всем тестам в консоль; подробный HTML-отчёт —
+    // app/build/reports/tests/test/index.html
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            println "Тестов: ${result.testCount}, успешно: ${result.successfulTestCount}, " +
+                    "ошибок: ${result.failedTestCount}, пропущено: ${result.skippedTestCount}"
+        }
+    }
+}
+
+// Пользовательская задача: краткая информация о сборке.
+tasks.register('buildInfo') {
+    group = 'help'
+    description = 'Показывает, где лежат собранные файлы и отчёт о тестах.'
+    def jarFile = tasks.named('jar').flatMap { it.archiveFile }
+    def report = layout.buildDirectory.file('reports/tests/test/index.html')
+    doLast {
+        println "Исполняемый jar:  ${jarFile.get().asFile}"
+        println "Отчёт о тестах:   ${report.get().asFile}"
+    }
+}

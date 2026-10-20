@@ -1,0 +1,5 @@
+build/
+chess
+chess_debug
+*.o
+*.d
